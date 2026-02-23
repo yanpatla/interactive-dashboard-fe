@@ -1,73 +1,111 @@
-# React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+---
 
-Currently, two official plugins are available:
+```md
+# Interactive Dashboard — Frontend (React + Vite + Firebase Auth + TanStack Query)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This is the frontend for the Traffic Dashboard home task.
 
-## React Compiler
+What it does:
+- Login/Register with Firebase Auth (Email+Password + Google)
+- Calls a Firebase Functions backend (REST)
+- Dashboard:
+  - Table (pagination, sorting, date filtering)
+  - Chart with granularity toggle (daily/weekly/monthly)
+  - URL-driven modals (create/edit/delete)
+- Role-based UI: only `editor` sees create/edit/delete actions
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+---
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React (Vite)
+- TypeScript
+- React Router (BrowserRouter + Routes + lazy loading + Suspense)
+- TanStack Query (server-state only: caching, invalidation, optimistic updates)
+- Firebase Auth (Web SDK)
+- React Hook Form + Zod (forms + validation)
+- shadcn/ui + Tailwind CSS (UI components)
+- Recharts (Line for daily, Bar for weekly/monthly)
+- Axios (HTTP client)
+- Sonner (toasts)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Project Structure (by responsibility)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Top-level folders:
+
+- `domain/`
+  - “Pure” app layer
+  - Datasources interfaces/implementations (Firebase Auth, token getters, etc.)
+  - Keep business rules away from React
+
+- `api/`
+  - HTTP calls (axios wrappers) to the backend
+
+- `hooks/`
+  - App hooks + TanStack Query hooks (queries/mutations)
+  - Optimistic updates + invalidation logic lives here
+
+- `pages/`
+  - Route-level screens (Login / Register / Dashboard)
+  - Dashboard includes modal screens
+
+- `layout/`
+  - Shared layouts (auth layout, app layout)
+
+- `components/`
+  - Reusable UI components (mostly shadcn/ui wrappers + small custom bits)
+
+- `router/`
+  - Router config, route guards, lazy loading
+
+This matches a Clean-ish split: **domain** (core), **hooks/api** (application glue), **pages/components** (presentation).
+
+---
+
+## Important Note: QueryClientProvider is NOT “state management”
+
+`<QueryClientProvider>` is just TanStack Query’s provider so React Query can:
+- cache server responses
+- track loading/errors
+- run invalidations/refetches
+
+It’s not “global state” like Redux/Zustand. It’s server-state caching.
+
+---
+
+## Environment Variables (Vercel / Local)
+
+Because this is Vite, **only variables prefixed with `VITE_` are exposed** to the client bundle. :contentReference[oaicite:3]{index=3}
+
+### Required (Firebase Web SDK)
+Set these from your Firebase project settings:
+
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_USE_AUTH_EMULATOR=true`
+- `VITE_AUTH_EMULATOR_URL=http://127.0.0.1:9099`
+
+### Backend base URL
+- `VITE_API_BASE_URL`
+
+Examples:
+- **Local Functions emulator**
+- `VITE_API_BASE_URL=http://127.0.0.1:5001/interactive-dashboard-7add2/europe-west1/api`
+## Install & Run (Local)
+
+From the frontend folder:
+
+```bash
+npm install
+npm run dev
 ```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Build:
+```bash
+npm run build
+npm run preview
 ```
